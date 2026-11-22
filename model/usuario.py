@@ -1,9 +1,9 @@
 class Usuario():
-    def __init__(self):
-        id : int
-        nombre : str
-        contrasena : str
-        activo : bool
+    def __init__(self, id: int, nombre: str, contrasena: str, activo: bool):
+        self.id = id
+        self.nombre = nombre
+        self.contrasena = contrasena
+        self.activo = False or activo
 
     def iniciar_sesion():
         bool_var = True # placeholder para asegurar el uso de un valor
