@@ -1,5 +1,5 @@
-from .usuario import Usuario, conectar_db, oracledb
-from .registrohorario import RegistroHorario
+from .usuario import Usuario
+from config.app_config import conectar_db, oracledb
 
 def validar_tabla_empleados():
     consulta_sql = """
@@ -100,13 +100,18 @@ class Empleado(Usuario):
         validar_tabla_empleados()
         insertar_datos_empleado(self)
 
-    def registrar_horas(self, p_fecha: str, p_horas_trabajadas: float, p_desc_tareas: str):
-        nuevo_registro = RegistroHorario(self,
-                                         p_fecha,
-                                         p_horas_trabajadas,
-                                         p_desc_tareas) #Al integrar BBDD esto se cambiara
-                                                        #Para usar de forma automatica el
-                                                        #proyecto al que este asignado el empleado
+    def registrar_horas(self, p_fecha: str, p_horas_trabajadas: float, p_desc_tareas: str, proyecto):
+        from .registrohorario import RegistroHorario
+        from .proyecto import Proyecto
+
+        if isinstance(proyecto, Proyecto):
+            nuevo_registro = RegistroHorario(self,
+                                            p_fecha,
+                                            p_horas_trabajadas,
+                                            p_desc_tareas,
+                                            proyecto)
+        else:
+            print("[ERROR] No es posible registrar trabajo en proyecto inexistente")
 
         #return tambien sujeto a cambio (placeholder)
-        return f"{p_horas_trabajadas}hrs registradas a nombre de {self.nombre}"
+        return f"{p_horas_trabajadas}hrs registradas en el proyecto <<{proyecto}>> a nombre de {self.nombre}"

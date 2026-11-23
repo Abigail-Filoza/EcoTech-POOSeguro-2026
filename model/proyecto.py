@@ -1,3 +1,4 @@
+from .empleado import Empleado
 
 class Proyecto():
     def __init__(self, nombre: str, descripcion: str, fecha_inicio: str):
@@ -6,5 +7,7 @@ class Proyecto():
         self.fecha_inicio = fecha_inicio
 
     def asignar_empleado(self, empleado: Empleado):
-        #este metodo solo tiene real sentido con integracion a bbdd
         print(f"Empleado {empleado.nombre} asignado a proyecto {self.nombre}.")
+
+    def deasignar_empleado(self, empleado: Empleado):
+        pass
