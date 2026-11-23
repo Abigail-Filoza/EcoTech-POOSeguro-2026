@@ -14,4 +14,4 @@ def conectar_db():
         conexion = oracledb.connect(user = DB_USER, password = DB_PASS, dsn= DB_DSN)
         return conexion
     except oracledb.Error as error:
-        print(f"Error al conectar a Oracle FreeSQL: {error}")
+        print(f"[ERROR] Conexión a Oracle FreeSQL | {error}")
