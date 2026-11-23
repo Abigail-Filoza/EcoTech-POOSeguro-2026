@@ -1,18 +1,22 @@
+from .departamento import Departamento
+
 class AdminRRHH():
     def __init__(self):
         pass
 
-    def registrar_empleado():
+    def registrar_empleado(self):
         return "string" # placeholder para asegurar tipo de dato
 
-    def generar_informe():
+    def generar_informe(self):
         pass
 
-    def crear_departamento():
-        pass
+    def crear_departamento(self, nombre: str, id_gerente: int):
+        departamento = Departamento(nombre, id_gerente)
 
-    def editar_departamento():
-        pass
+        return departamento if departamento.id_departamento is not None else None  # None si el insert falló
 
-    def eliminar_departamento():
-        pass
+    def editar_departamento(self, departamento: Departamento, nuevo_nombre: str, nuevo_id_gerente: int):
+        departamento.editar(nuevo_nombre, nuevo_id_gerente)
+
+    def eliminar_departamento(self, departamento: Departamento):
+        return departamento.eliminar()
