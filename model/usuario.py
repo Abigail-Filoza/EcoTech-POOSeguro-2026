@@ -1,11 +1,10 @@
 class Usuario():
-    def __init__(self, id: int, nombre: str, contrasena: str, activo: bool):
-        self.id = id
+    def __init__(self, nombre: str, correo: str, clave: str):
         self.nombre = nombre
-        self.contrasena = contrasena
-        self.activo = False or activo
+        self.correo = correo
+        self.clave = clave
 
-    def iniciar_sesion():
+    def iniciar_sesion(correo: str, clave: str):
         bool_var = True # placeholder para asegurar el uso de un valor
         return bool_var # booleano en la funcion una vez escrita
 
@@ -15,3 +14,5 @@ class Usuario():
 
     def cambiar_contrasena():
         pass
+
+    #estos metodos funcionaran con la bbdd
