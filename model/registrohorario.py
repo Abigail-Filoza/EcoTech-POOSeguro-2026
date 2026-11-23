@@ -11,7 +11,7 @@ def validar_tabla_registros():
             horas_trabajadas number not null,
             descripcion_tareas varchar(200),
             id_proyecto number not null,
-            CONSTRAINT uq_registro UNIQUE (id_empleado, fecha)
+            CONSTRAINT uq_registro UNIQUE (id_empleado, fecha),
             FOREIGN KEY(id_empleado) REFERENCES empleados(id),
             FOREIGN KEY(id_proyecto) REFERENCES proyectos(id)
         );
@@ -37,9 +37,14 @@ def validar_tabla_registros():
             conn.close()
 
 def insertar_datos_registro(registro: RegistroHorario):
+    consulta_select_usuario = """
+        select id from usuarios
+        where usuarios.correo = :1;
+    """
+
     consulta_select_empleado = """
         select id from empleados
-        where empleados.correo = :1;
+        where empleados.id_usuario = :1;
     """
 
     consulta_select_proyecto = """
@@ -70,7 +75,10 @@ def insertar_datos_registro(registro: RegistroHorario):
         if conn:
             cursor = conn.cursor()
 
-            cursor.execute(consulta_select_empleado, (registro.empleado.correo,))
+            cursor.execute(consulta_select_usuario, (registro.empleado.correo,))
+            id_usuario = str(cursor.fetchall()[0][0])
+
+            cursor.execute(consulta_select_empleado, (id_usuario,))
             id_empleado = str(cursor.fetchall()[0][0])
 
             cursor.execute(consulta_select_proyecto,(registro.proyecto.nombre, registro.proyecto.descripcion, registro.proyecto.fecha_inicio))
@@ -79,7 +87,7 @@ def insertar_datos_registro(registro: RegistroHorario):
             cursor.execute(consulta_insert, (id_empleado, registro.fecha, registro.horas_trabajadas, registro.desc_tareas, id_proyecto))
             conn.commit()
 
-            print("[INFO] Orden registrada correctamente")
+            print("[INFO] Registro enviado correctamente")
     except oracledb.IntegrityError as e:
         if conn:
             conn.rollback() # Si algo falla, nos aseguramos de que nada cambie en la bd
