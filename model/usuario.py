@@ -13,6 +13,7 @@ def validar_tabla_usuarios():
     cursor = None
 
     try:
+        print("Intentando validar tabla usuarios...")
         conn = conectar_db()
 
         if conn:
@@ -29,8 +30,10 @@ def validar_tabla_usuarios():
             conn.close()
 
 def insertar_datos_usuario(usuario: Usuario):
-    consulta_insert = """insert into usuarios (nombre, correo, clave)
-                         values (:1, :2, :3)"""
+    consulta_insert = """
+        insert into usuarios (nombre, correo, clave)
+        values (:1, :2, :3)
+    """
     conn = None
     cursor = None
 

@@ -1,6 +1,5 @@
 from model.usuario import Usuario
-
-
+from model.empleado import Empleado
 """
 SECCION DE PRUEBAS:
 """
@@ -22,4 +21,6 @@ SECCION DE PRUEBAS:
 
 # print(test_admin.nombre)
 
-test_usuario = Usuario("pedro", "hola@mail.me", "abc123")
+#test_usuario = Usuario("pedro", "hola@mail.me", "abc123")
+
+test_empleado = Empleado("juan", "chao@mail.me", "xyz789", "Av. Nida", 958575, "27-FEB-2025", 150000)

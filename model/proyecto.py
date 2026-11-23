@@ -1,4 +1,4 @@
-from .empleado import Empleado
+
 class Proyecto():
     def __init__(self, nombre: str, descripcion: str, fecha_inicio: str):
         self.nombre = nombre
