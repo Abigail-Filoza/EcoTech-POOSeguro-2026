@@ -1,8 +1,6 @@
 from config.app_config import conectar_db, oracledb
 
-def ejecutar_consulta(consulta, parametros, msg_ok, msg_error, msg_sin_filas=None,
-                      errores_integridad=None, retornar_id=False):
-    """Ejecuta una consulta DML/DDL. Devuelve True (o el id si retornar_id) o False si falla."""
+def ejecutar_consulta(consulta: str, parametros: tuple | None, msg_ok: str, msg_error: str, errores_posibles: dict[int, str] = None):
     conn = None
     cursor = None
 
@@ -12,25 +10,25 @@ def ejecutar_consulta(consulta, parametros, msg_ok, msg_error, msg_sin_filas=Non
         if conn:
             cursor = conn.cursor()
 
-            if retornar_id:
-                id_generado = cursor.var(int)
-                parametros = (*parametros, id_generado)
-
-            cursor.execute(consulta, parametros)
-
-            if msg_sin_filas and cursor.rowcount == 0:
-                print(f"[WARNING] {msg_sin_filas}")
-                return False
+            if parametros != None:
+                cursor.execute(consulta, parametros)
+            else:
+                cursor.execute(consulta)
 
             conn.commit()
             print(f"[INFO] {msg_ok}")
-            return id_generado.getvalue()[0] if retornar_id else True
     except oracledb.IntegrityError as e:
         if conn:
             conn.rollback()
 
-        mensaje = (errores_integridad or {}).get(e.args[0].code)
-        print(f"[WARNING] {mensaje}" if mensaje else f"[ERROR] Error de integridad | {e}")
+        if errores_posibles != None:
+            error = e.args[0]
+
+            for codigo, texto in errores_posibles.items():
+                if error == codigo:
+                    print(f"[ERROR] {texto}")
+        else:
+            print(f"[ERROR] Error de integridad | {e}")
     except Exception as e:
         if conn:
             conn.rollback()
@@ -42,5 +40,3 @@ def ejecutar_consulta(consulta, parametros, msg_ok, msg_error, msg_sin_filas=Non
 
         if conn:
             conn.close()
-
-    return False

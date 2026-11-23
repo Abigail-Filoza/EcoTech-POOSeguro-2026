@@ -1,7 +1,8 @@
 from model.usuario import Usuario
 from model.empleado import Empleado
 from model.proyecto import Proyecto
-
+from model.departamento import Departamento
+from model.adminrrhh import AdminRRHH
 """
 SECCION DE PRUEBAS:
 """
@@ -23,14 +24,8 @@ SECCION DE PRUEBAS:
 
 # print(test_admin.nombre)
 
-#test_usuario = Usuario("pedro", "hola@mail.me", "abc123")
+test_empleado = Empleado("pedro", "hola@mail.me", "abc123", "hola@email.com", "qwerty", "01-01-2025", 500000)
 
-test_empleado = Empleado("juan", "chao@mail.me", "xyz789", "Av. Nida", 958575, "27-FEB-2025", 150000)
+test_admin = AdminRRHH("juan", "chao@mail.me", "xyz789", "Av. Nida", 958575, "27-FEB-2025", 150000)
 
-test_proyecto = Proyecto("Proyecto 1", "Prueba de proyecto", "01-JAN-2025", test_empleado)
-
-test_proyecto.asignar_empleado(test_empleado)
-
-test_empleado.registrar_horas("01-APR-2025", 7.75, "y, nse", test_proyecto)
-
-test_proyecto.deasignar_empleado(test_empleado)
+test_admin.crear_departamento("Depto1", test_empleado)
