@@ -47,7 +47,7 @@ def insertar_datos_empleado(empleado: Empleado):
             fecha_inicio_contrato,
             salario
         ) 
-        values (:1, :2, :3, :4, :5);
+        values (:1, :2, :3, to_date(:4,'dd-mm-yyyy'), :5);
     """
     conn = None
     cursor = None
