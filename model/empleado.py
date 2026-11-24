@@ -33,7 +33,7 @@ def validar_tabla_empleados():
         if conn:
             conn.close()
 
-def insertar_datos_empleado(empleado: Empleado):
+def insertar_datos_empleado(empleado: "Empleado"):
     consulta_select_usuario = """
         select id from usuarios
         where usuarios.correo = :1;

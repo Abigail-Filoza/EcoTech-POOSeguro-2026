@@ -1,2 +1,3 @@
+bcrypt
 oracledb
 python-dotenv
