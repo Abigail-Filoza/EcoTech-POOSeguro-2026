@@ -1,8 +1,11 @@
 from .departamento import Departamento
 
 class AdminRRHH():
-    def __init__(self):
-        pass
+    def __init__(self, usuario):
+        if not usuario.tiene_rol("admin_rrhh"):
+            raise PermissionError("Se requiere el rol admin_rrhh")
+
+        self.usuario = usuario
 
     def registrar_empleado(self):
         return "string" # placeholder para asegurar tipo de dato

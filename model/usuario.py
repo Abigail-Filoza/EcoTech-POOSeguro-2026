@@ -5,14 +5,66 @@ def hashear_clave(clave: str) -> str:
     clave_bytes = clave.encode('utf-8')
     return bcrypt.hashpw(clave_bytes, bcrypt.gensalt()).decode('utf-8')
 
+def validar_tabla_roles():
+    consulta_sql = """
+        create table if not exists roles_usuario (
+            correo varchar2(100) not null,
+            rol varchar2(30) not null,
+            constraint uq_rol_usuario unique (correo, rol),
+            constraint fk_rol_usuario foreign key (correo)
+                references usuarios(correo) on delete cascade
+        )
+    """
+    conn = None
+    cursor = None
+
+    try:
+        conn = conectar_db()
+
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute(consulta_sql)
+            print("[INFO] Tabla roles_usuario validada correctamente")
+    except Exception as e:
+        print(f"[ERROR] Validación de tabla roles_usuario abortada | {e}")
+    finally:
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
+
+def bd_cargar_roles(correo: str) -> set:
+    consulta_select = "select rol from roles_usuario where correo = :1"
+    conn = None
+    cursor = None
+
+    try:
+        conn = conectar_db()
+
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute(consulta_select, (correo,))
+
+            return {fila[0] for fila in cursor.fetchall()}
+    except Exception as e:
+        print(f"[ERROR] No se pudieron cargar los roles | {e}")
+    finally:
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
+
+    return set()
+
 def validar_tabla_usuarios():
     consulta_sql = """
         create table if not exists usuarios (
             id NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
             nombre varchar2(100) not null,
             correo varchar2(100) not null unique,
-            clave varchar2(150) not null,
-            rol varchar2(30) default 'usuario' not null
+            clave varchar2(150) not null
         )
     """
     conn = None
@@ -35,8 +87,8 @@ def validar_tabla_usuarios():
             conn.close()
 
 def insertar_datos_usuario(usuario: "Usuario"):
-    consulta_insert = """insert into usuarios (nombre, correo, clave, rol)
-                         values (:1, :2, :3, :4)"""
+    consulta_insert = """insert into usuarios (nombre, correo, clave)
+                         values (:1, :2, :3)"""
     conn = None
     cursor = None
 
@@ -46,7 +98,7 @@ def insertar_datos_usuario(usuario: "Usuario"):
         if conn:
             cursor = conn.cursor()
             cursor.execute(consulta_insert, (usuario.nombre, usuario.correo,
-                                             hashear_clave(usuario.clave), usuario.rol))
+                                             hashear_clave(usuario.clave)))
             conn.commit()
 
             print("[INFO] Usuario insertado correctamente")
@@ -78,7 +130,7 @@ def iniciar_sesion(correo: str, clave: str):
         En caso de ser correctos, retorna el usuario (con su rol).
         En caso incorrecto devuelve False.
     """
-    consulta = "select nombre, clave, rol from usuarios where correo = :1"
+    consulta = "select nombre, clave from usuarios where correo = :1"
     conn = None
     cursor = None
 
@@ -91,12 +143,14 @@ def iniciar_sesion(correo: str, clave: str):
             datos_usuario = cursor.fetchone()  # (nombre, clave, rol) o None
 
             if datos_usuario:
-                nombre, clave_bd, rol = datos_usuario
+                nombre, clave_bd = datos_usuario
 
                 # Se deben transformar ambas claves a bytes para validarlas
                 if bcrypt.checkpw(clave.encode('utf-8'), str(clave_bd).encode('utf-8')):
                     print("[INFO] Ingreso correcto")
-                    usuario = Usuario(nombre, correo, clave_bd, rol, registrar=False)
+                    usuario = Usuario(nombre, correo, clave_bd, registrar=False)
+                    validar_tabla_roles()
+                    usuario.roles = bd_cargar_roles(correo)
                     usuario.sesion_activa = True
                     return usuario
 
@@ -157,16 +211,19 @@ def bd_actualizar_clave(usuario: "Usuario", nueva_clave: str):
     return False
 
 class Usuario():
-    def __init__(self, nombre: str, correo: str, clave: str, rol: str = "usuario", registrar: bool = True):
+    def __init__(self, nombre: str, correo: str, clave: str, registrar: bool = True):
         self.nombre = nombre
         self.correo = correo
         self.clave = clave
-        self.rol = rol
+        self.roles = set() 
         self.sesion_activa = False
 
         if registrar:  # False cuando solo reconstruimos un usuario que ya existe (login)
             validar_tabla_usuarios()
             insertar_datos_usuario(self)
+    
+    def tiene_rol(self, rol: str) -> bool:
+        return rol in self.roles 
 
     def cerrar_sesion(self):
         self.sesion_activa = False
