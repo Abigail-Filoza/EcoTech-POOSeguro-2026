@@ -1,16 +1,36 @@
-from model.usuario import Usuario
-from model.empleado import Empleado
-from model.adminrrhh import AdminRRHH
-from model.departamento import Departamento
-from model.proyecto import Proyecto
+from view.menus import menu_inicial, menu_usuario
+
+def main():
+    programa_activo = True
+    usuario = None
+
+    while programa_activo:
+        if usuario:  # hay sesión iniciada: menú del usuario
+            usuario = menu_usuario(usuario)
+        else:  # sin sesión: menú principal
+            usuario, programa_activo = menu_inicial(usuario)
+
+if __name__ == "__main__":
+    main()
 
 
 
 """
 SECCION DE PRUEBAS:
 """
-test_empleado = Empleado("pedro", "hola@mail.com", "qwerty", "abc123", 123, "01-02-1999", 500000)
+# from model.usuario import Usuario
+# from model.empleado import Empleado
+# from model.adminrrhh import AdminRRHH
+# from model.departamento import Departamento
+# from model.proyecto import Proyecto
 
-test_admin = AdminRRHH("juan", "chao@mail.me", "xyz789", "Av. Nida", 958575, "27-02-2025", 150000)
+# usuario_bd = Usuario("Laura", "mail.com", "asdf")
 
-test_admin.crear_departamento("Depto1", test_empleado)
+# usuario_aux = Usuario("test","test","test",[],False)
+
+# in_correo = input("correo: ")
+# in_clave = input("clave: ")
+
+# usuario_aux = usuario_aux.iniciar_sesion(in_correo,in_clave)
+
+# print(usuario_aux.nombre)

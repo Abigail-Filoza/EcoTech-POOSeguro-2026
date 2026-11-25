@@ -19,13 +19,14 @@ class AdminRRHH(Empleado):
     def generar_informe():
         pass
 
+    def listar_departamentos(self):
+        return Departamento.listar()
+
     def crear_departamento(self, d_nombre: str, d_gerente: Empleado):
         nuevo_depto = Departamento(d_nombre, d_gerente)
 
     def editar_departamento(self, depto: Departamento, nuevo_nombre: str, nuevo_gerente: Empleado):
         validar_datos_departamento(nuevo_nombre, nuevo_gerente)
-
-        ERR_NOMBRE_DUPLICADO = {1: "Ya existe un departamento con ese nombre"}  # ORA-00001
 
         nombre_ref = depto.nombre
 

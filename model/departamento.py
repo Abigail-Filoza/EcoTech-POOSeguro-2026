@@ -1,4 +1,4 @@
-from utils.metodos_bd import ejecutar_consulta
+from utils.metodos_bd import ejecutar_consulta, consultar
 from config.app_config import conectar_db, oracledb
 from .proyecto import Proyecto
 from .empleado import Empleado
@@ -374,6 +374,12 @@ class Departamento():
             validar_tabla_departamentos()
             insertar_datos_departamento(self)
 
+    def listar():
+        filas = consultar("select id_departamento, nombre, id_gerente from departamentos order by id_departamento")
+
+        return [Departamento(nombre, id_gerente, registrar=False, id_departamento=id_dep)
+                for id_dep, nombre, id_gerente in filas]
+    
     def crear_proyecto(self, p_nombre: str, p_descripcion: str, p_fecha_inicio: str, p_encargado: Empleado):
         nuevo_proyecto = Proyecto(p_nombre, p_descripcion, p_fecha_inicio, p_encargado)
 

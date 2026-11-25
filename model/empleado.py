@@ -90,15 +90,16 @@ def insertar_datos_empleado(empleado: Empleado):
             conn.close()
 
 class Empleado(Usuario):
-    def __init__(self, nombre: str, correo: str, clave: str, direccion: str, telefono: int, fecha_inicio_contrato: str, salario: int):
+    def __init__(self, nombre: str, correo: str, clave: str, direccion: str, telefono: int, fecha_inicio_contrato: str, salario: int, registrar: bool = True):
         super().__init__(nombre, correo, clave)
         self.direccion = direccion
         self.telefono = telefono
         self.fecha_inicio_contrato = fecha_inicio_contrato
         self.salario = salario
 
-        validar_tabla_empleados()
-        insertar_datos_empleado(self)
+        if registrar:
+            validar_tabla_empleados()
+            insertar_datos_empleado(self)
 
     def registrar_horas(self, p_fecha: str, p_horas_trabajadas: float, p_desc_tareas: str, proyecto):
         from .registrohorario import RegistroHorario
