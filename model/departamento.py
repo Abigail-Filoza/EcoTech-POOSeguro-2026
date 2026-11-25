@@ -1,6 +1,5 @@
 from DataBase.queries import ejecutar_consulta, consultar 
-from .proyecto import Proyecto
-from .empleado import Empleado
+from .proyecto import Proyecto, validar_datos_proyecto
 from config.app_config import NOMBRE_DEPTO_RRHH
 
 
@@ -43,88 +42,53 @@ class Departamento():
             retornar_id=True) or None
             
     @staticmethod
-    def listar():
-        filas = consultar("select id_departamento, nombre, id_gerente from departamentos order by id_departamento")
+    def listar_por_gerente(id_usuario: int):
+        filas = consultar("""select id_departamento, nombre, id_gerente from departamentos
+                             where id_gerente = :1 order by id_departamento""", (id_usuario,))
 
         return [Departamento(nombre, id_gerente, registrar=False, id_departamento=id_dep)
                 for id_dep, nombre, id_gerente in filas]
 
-    def editar(self, nuevo_nombre: str, nuevo_id_gerente: int):
-        validar_datos_departamento(nuevo_nombre, nuevo_id_gerente)
+    def listar_proyectos(self):
+        return Proyecto.listar_por_departamento(self.id_departamento)
 
-        if ejecutar_consulta(
-                "update departamentos set nombre = :1, id_gerente = :2 where id_departamento = :3",
-                (nuevo_nombre.strip(), nuevo_id_gerente, self.id_departamento),
-                "Departamento actualizado correctamente", "Departamento no se pudo actualizar",
-                "El departamento no existe en la base de datos", ERR_NOMBRE_DUPLICADO):
-            self.nombre = nuevo_nombre.strip()
-            self.id_gerente = nuevo_id_gerente
-
-    def eliminar(self):
-        if self.nombre == NOMBRE_DEPTO_RRHH:
-            print("[WARNING] El departamento de Recursos Humanos no se puede eliminar")
-            return False 
-        
-        return ejecutar_consulta(
-            "delete from departamentos where id_departamento = :1", (self.id_departamento,),
-            "Departamento eliminado correctamente", "Departamento no se pudo eliminar",
-            "El departamento no existe en la base de datos", ERR_REGISTROS_ASOCIADOS)
-
-    def crear_proyecto(self, p_nombre, p_descripcion, p_fecha_inicio):
-        if self.id_departamento is None:
-            print("[WARNING] El departamento no está registrado en la base de datos")
-            return None
-
-        nuevo_proyecto = Proyecto(p_nombre, p_descripcion, p_fecha_inicio, self.id_departamento)
+    def crear_proyecto(self, p_nombre: str, p_descripcion: str, p_fecha_inicio: str, id_encargado: int = None):
+        nuevo_proyecto = Proyecto(p_nombre, p_descripcion, p_fecha_inicio, self.id_departamento, id_encargado)
 
         return nuevo_proyecto if nuevo_proyecto.id is not None else None
 
-    def editar_proyecto(self, id_proyecto: int, p_nombre: str, p_descripcion: str, p_fecha_inicio: str):
-        if not isinstance(id_proyecto, int):
-            print("Id inválido | No corresponde a tipo Integer")
-            return False
+    def editar_proyecto(self, id_proyecto: int, p_nombre: str, p_descripcion: str,
+                        p_fecha_inicio: str, id_encargado: int = None):
+        validar_datos_proyecto(p_nombre, p_descripcion, p_fecha_inicio)
 
         return ejecutar_consulta(
             """update proyectos set nombre = :1, descripcion = :2,
-                                    fecha_inicio = to_date(:3, 'YYYY-MM-DD')
-               where id = :4 and id_departamento = :5""",
-            (p_nombre, p_descripcion, p_fecha_inicio, id_proyecto, self.id_departamento),
+                                    fecha_inicio = to_date(:3, 'YYYY-MM-DD'), id_encargado = :4
+               where id = :5 and id_departamento = :6""",
+            (p_nombre.strip(), p_descripcion, p_fecha_inicio, id_encargado, id_proyecto, self.id_departamento),
             "Proyecto actualizado correctamente", "Proyecto no se pudo actualizar",
             "El proyecto no existe o no pertenece a este departamento")
 
     def eliminar_proyecto(self, id_proyecto: int):
-        if not isinstance(id_proyecto, int):
-            print("Id inválido | No corresponde a tipo Integer")
-            return False
-
         return ejecutar_consulta(
             "delete from proyectos where id = :1 and id_departamento = :2",
             (id_proyecto, self.id_departamento), "Proyecto eliminado correctamente",
             "Proyecto no se pudo eliminar",
-            "El proyecto no existe o no pertenece a este departamento", ERR_REGISTROS_ASOCIADOS)
+            "El proyecto no existe o no pertenece a este departamento",
+            {2292: "No se puede eliminar: el proyecto tiene empleados asignados"})
 
-    def asignar_empleado(self, empleado: Empleado):
-        if not isinstance(empleado, Empleado):
-            print("Empleado inválido | No corresponde a tipo Empleado")
-            return False
-
+    def asignar_empleado(self, correo: str):
         return ejecutar_consulta(
-            "update empleados set id_departamento = :1 where correo = :2 and id_departamento is null",
-            (self.id_departamento, empleado.correo), "Empleado asignado correctamente",
-            "Empleado no se pudo asignar",
+            """update empleados set id_departamento = :1
+               where id_usuario = (select id from usuarios where correo = :2) and id_departamento is null""",
+            (self.id_departamento, correo), "Empleado asignado correctamente", "Empleado no se pudo asignar",
             "El empleado no existe o ya tiene un departamento asignado")
 
-    def reasignar_empleado(self, empleado: Empleado, departamento_destino: "Departamento"):
-        if not isinstance(empleado, Empleado):
-            print("Empleado inválido | No corresponde a tipo Empleado")
-            return False
-
-        if not isinstance(departamento_destino, Departamento) or departamento_destino.id_departamento is None:
-            print("Departamento destino inválido | No está registrado en la base de datos")
-            return False
-
+    def reasignar_empleado(self, correo: str, departamento_destino: "Departamento"):
+        # Al cambiar de departamento, el empleado sale de su proyecto actual
         return ejecutar_consulta(
-            "update empleados set id_departamento = :1 where correo = :2 and id_departamento = :3",
-            (departamento_destino.id_departamento, empleado.correo, self.id_departamento),
+            """update empleados set id_departamento = :1, id_proyecto = null
+               where id_usuario = (select id from usuarios where correo = :2) and id_departamento = :3""",
+            (departamento_destino.id_departamento, correo, self.id_departamento),
             "Empleado reasignado correctamente", "Empleado no se pudo reasignar",
-            "El empleado no existe o no pertenece al departamento de origen")
+            "El empleado no existe o no pertenece a este departamento")

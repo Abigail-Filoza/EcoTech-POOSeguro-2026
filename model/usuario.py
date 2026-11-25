@@ -58,10 +58,11 @@ def bd_calcular_roles(id_usuario: int, correo: str) -> set:
         from dual""", {"id": id_usuario, "rrhh": NOMBRE_DEPTO_RRHH})
 
     if filas:
-        es_gerente, es_empleado, es_rrhh = filas[0]
-
+        es_gerente, es_empleado, es_rrhh, es_encargado = filas[0]
+        
         if es_gerente: roles.add("gerente")
         if es_empleado: roles.add("empleado")
+        if es_encargado: roles.add("encargado")
         if es_rrhh: roles.add("admin_rrhh")
 
     return roles

@@ -7,10 +7,12 @@ def validar_tabla_empleados():
             id NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
             id_usuario number not null unique,
             id_departamento number,
+            id_proyecto number,
             direccion varchar2(75) not null,
             telefono varchar2(25) not null,
             fecha_inicio_contrato date not null,
             salario number not null,
+            constraint fk_empleado_proyecto foreign key (id_proyecto) references proyectos(id),
             constraint fk_empleado_usuario foreign key (id_usuario) references usuarios(id),
             constraint fk_empleado_departamento foreign key (id_departamento)
                 references departamentos(id_departamento)
