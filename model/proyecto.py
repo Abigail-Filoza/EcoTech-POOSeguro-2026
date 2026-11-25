@@ -46,7 +46,7 @@ class Proyecto():
         self.id_departamento = id_departamento
         self.id_encargado = id_encargado
 
-        if registrar:  # False cuando solo reconstruimos uno que ya existe
+        if registrar:  
             self.id = ejecutar_consulta(
                 """insert into proyectos (nombre, descripcion, fecha_inicio, id_departamento, id_encargado)
                    values (:1, :2, to_date(:3, 'YYYY-MM-DD'), :4, :5) returning id into :6""",

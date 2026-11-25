@@ -85,7 +85,6 @@ class Departamento():
             "El empleado no existe o ya tiene un departamento asignado")
 
     def reasignar_empleado(self, correo: str, departamento_destino: "Departamento"):
-        # Al cambiar de departamento, el empleado sale de su proyecto actual
         return ejecutar_consulta(
             """update empleados set id_departamento = :1, id_proyecto = null
                where id_usuario = (select id from usuarios where correo = :2) and id_departamento = :3""",

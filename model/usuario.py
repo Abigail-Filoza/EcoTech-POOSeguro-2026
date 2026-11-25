@@ -125,7 +125,6 @@ def iniciar_sesion(correo: str, clave: str):
             if datos_usuario:
                 id_usuario, nombre, clave_bd = datos_usuario
 
-                # Se deben transformar ambas claves a bytes para validarlas
                 if bcrypt.checkpw(clave.encode('utf-8'), str(clave_bd).encode('utf-8')):
                     print("[INFO] Ingreso correcto")
                     usuario = Usuario(nombre, correo, clave_bd, registrar=False)
@@ -178,7 +177,7 @@ def bd_actualizar_clave(usuario: "Usuario", nueva_clave: str):
         print(f"[ERROR] Error de integridad | {e}")
     except Exception as e:
         if conn:
-            conn.rollback() # Si algo falla, nos aseguramos de que nada cambie en la bd
+            conn.rollback() 
 
         print(f"[ERROR] Clave no se pudo actualizar | {e}")
     finally:
@@ -199,7 +198,7 @@ class Usuario():
         self.id = None 
         self.sesion_activa = False
 
-        if registrar:  # False cuando solo reconstruimos un usuario que ya existe (login)
+        if registrar:  
             validar_tabla_usuarios()
             insertar_datos_usuario(self)
     

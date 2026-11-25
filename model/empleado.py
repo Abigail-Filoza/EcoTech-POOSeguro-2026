@@ -104,4 +104,3 @@ class Empleado(Usuario):
 
         self.registrado = insertar_datos_empleado(self)
 
-    # registrar_horas queda exactamente como lo tienes

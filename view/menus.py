@@ -43,7 +43,7 @@ def menu_principal(usuario):
         clave = getpass(" Contraseña : ")
 
         if nombre and correo and clave:
-            Usuario(nombre, correo, clave)  # el constructor crea la tabla e inserta
+            Usuario(nombre, correo, clave)  
         else:
             print(" Todos los campos son obligatorios.")
     else:
@@ -142,7 +142,7 @@ def menu_departamentos(admin: AdminRRHH):
                 admin.eliminar_departamento(departamento)
         elif opcion != "5":
             print(" Opción no válida, intente nuevamente.")
-    except ValueError as e:  # validaciones de Departamento
+    except ValueError as e:  
         print(f" {e}")
 
 def menu_usuario(usuario):
@@ -264,7 +264,7 @@ def menu_gerente(usuario):
                 departamento.reasignar_empleado(correo, destino)
         elif opcion != "7":
             print(" Opción no válida, intente nuevamente.")
-    except ValueError as e:  # validaciones de Proyecto
+    except ValueError as e: 
         print(f" {e}")
         
 def menu_encargado(usuario):

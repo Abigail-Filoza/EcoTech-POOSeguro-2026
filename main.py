@@ -14,9 +14,9 @@ def main():
     usuario = None
 
     while programa_activo:
-        if usuario:  # hay sesión iniciada: menú del usuario
+        if usuario:  
             usuario = menu_usuario(usuario)
-        else:  # sin sesión: menú principal
+        else:  
             usuario, programa_activo = menu_principal(usuario)
 
 if __name__ == "__main__":
