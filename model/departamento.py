@@ -1,6 +1,7 @@
-from DataBase.queries import ejecutar_consulta
+from DataBase.queries import ejecutar_consulta, consultar 
 from .proyecto import Proyecto
 from .empleado import Empleado
+from config.app_config import NOMBRE_DEPTO_RRHH
 
 
 def validar_tabla_departamentos():
@@ -8,7 +9,8 @@ def validar_tabla_departamentos():
         create table if not exists departamentos (
             id_departamento NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
             nombre varchar2(100) not null unique,
-            id_gerente number not null
+            id_gerente number,
+            constraint fk_departamento_gerente foreign key(id_gerente) references usuarios(id)
         )
     """
     ejecutar_consulta(consulta_sql, (), "Tabla departamentos validada correctamente",
@@ -19,26 +21,33 @@ def validar_datos_departamento(nombre, id_gerente):
         raise ValueError("El nombre del departamento es obligatorio y debe ser String")
     if len(nombre.strip()) > 100:
         raise ValueError("El nombre no puede superar los 100 caracteres")
-    if not isinstance(id_gerente, int) or isinstance(id_gerente, bool) or id_gerente <= 0:
-        raise ValueError("El id del gerente debe ser un entero positivo")
+    if id_gerente is not None and (not isinstance(id_gerente, int) or isinstance(id_gerente, bool) or id_gerente <= 0):
+        raise ValueError("El id del gerente debe ser un entero positivo o quedar vacío")
 
 ERR_NOMBRE_DUPLICADO = {1: "Ya existe un departamento con ese nombre"}  # ORA-00001
 ERR_REGISTROS_ASOCIADOS = {2292: "No se puede eliminar: tiene registros asociados"}  # ORA-02292
 
 class Departamento():
-    def __init__(self, nombre: str, id_gerente: int):
+    def __init__(self, nombre: str, id_gerente: int = None, registrar: bool = True, id_departamento: int = None):
         validar_datos_departamento(nombre, id_gerente)
 
-        self.id_departamento = None
+        self.id_departamento = self.id_departamento
         self.nombre = nombre.strip()
         self.id_gerente = id_gerente
 
-        validar_tabla_departamentos()
-        self.id_departamento = ejecutar_consulta(
+        if registrar: 
+            self.id_departamento = ejecutar_consulta(
             "insert into departamentos (nombre, id_gerente) values (:1, :2) returning id_departamento into :3",
             (self.nombre, self.id_gerente), "Departamento insertado correctamente",
             "Departamento no registrado", errores_integridad=ERR_NOMBRE_DUPLICADO,
             retornar_id=True) or None
+            
+    @staticmethod
+    def listar():
+        filas = consultar("select id_departamento, nombre, id_gerente from departamentos order by id_departamento")
+
+        return [Departamento(nombre, id_gerente, registrar=False, id_departamento=id_dep)
+                for id_dep, nombre, id_gerente in filas]
 
     def editar(self, nuevo_nombre: str, nuevo_id_gerente: int):
         validar_datos_departamento(nuevo_nombre, nuevo_id_gerente)
@@ -52,6 +61,10 @@ class Departamento():
             self.id_gerente = nuevo_id_gerente
 
     def eliminar(self):
+        if self.nombre == NOMBRE_DEPTO_RRHH:
+            print("[WARNING] El departamento de Recursos Humanos no se puede eliminar")
+            return False 
+        
         return ejecutar_consulta(
             "delete from departamentos where id_departamento = :1", (self.id_departamento,),
             "Departamento eliminado correctamente", "Departamento no se pudo eliminar",

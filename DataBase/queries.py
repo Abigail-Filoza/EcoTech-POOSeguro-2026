@@ -44,3 +44,27 @@ def ejecutar_consulta(consulta, parametros, msg_ok, msg_error, msg_sin_filas=Non
             conn.close()
 
     return False
+
+def consultar(consulta, parametros=()):
+    """Ejecuta un SELECT y devuelve la lista de filas (vacía si falla)."""
+    conn = None
+    cursor = None
+
+    try:
+        conn = conectar_db()
+
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute(consulta, parametros)
+
+            return cursor.fetchall()
+    except Exception as e:
+        print(f"[ERROR] Consulta fallida | {e}")
+    finally:
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
+
+    return []

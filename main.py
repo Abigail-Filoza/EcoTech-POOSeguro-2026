@@ -1,6 +1,13 @@
+from model.usuario import validar_tabla_usuarios
+from model.departamento import validar_tabla_departamentos
+from model.empleado import validar_tabla_empleados
 from view.menus import menu_principal, menu_usuario
 
 def main():
+    validar_tabla_usuarios()
+    validar_tabla_departamentos()
+    validar_tabla_empleados()
+    
     programa_activo = True
     usuario = None
 

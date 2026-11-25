@@ -1,7 +1,8 @@
 from getpass import getpass
 from model.usuario import Usuario, iniciar_sesion
 from model.adminrrhh import AdminRRHH
-from model.administradorsistema import AdministradorDeSistema, ROLES_VALIDOS
+from model.usuario import Usuario, iniciar_sesion, bd_buscar_id_usuario
+
 
 def pedir_login(max_intentos: int = 3):
     for intento in range(1, max_intentos + 1):
@@ -78,9 +79,9 @@ def menu_departamentos(admin: AdminRRHH):
                 print(f"  {d.id_departamento} : {d.nombre} (gerente: {d.id_gerente})")
         elif opcion == "2":
             nombre = input(" Nombre : ")
-            id_gerente = pedir_entero(" Id del gerente : ")
+            id_gerente, valido = pedir_gerente()
 
-            if id_gerente is not None:
+            if valido:
                 admin.crear_departamento(nombre, id_gerente)
         elif opcion in ("3", "4"):
             departamento = elegir_departamento(admin)
@@ -100,31 +101,16 @@ def menu_departamentos(admin: AdminRRHH):
     except ValueError as e:  # validaciones de Departamento
         print(f" {e}")
 
-def menu_roles(admin: AdministradorDeSistema):
-    opcion = input("\n 1 : Agregar rol\n 2 : Quitar rol\n 3 : Volver\n\n Opción : ")
-
-    if opcion in ("1", "2"):
-        correo = input(" Correo del usuario : ").strip()
-        print(f" Roles disponibles: {', '.join(ROLES_VALIDOS)}")
-        rol = input(" Rol : ").strip()
-
-        if opcion == "1":
-            admin.agregar_rol(correo, rol)
-        else:
-            admin.quitar_rol(correo, rol)
-    elif opcion != "3":
-        print(" Opción no válida, intente nuevamente.")
-
 def menu_usuario(usuario):
-    """Se ejecuta mientras haya sesión iniciada; devuelve el usuario o None al cerrar."""
     print(f"\n Bienvenido, {usuario.nombre}")
 
+    
+
+    es_rrhh = usuario.tiene_rol("admin_rrhh") or usuario.tiene_rol("admin_sistema")
     texto = "\n 1 : Cambiar contraseña"
 
-    if usuario.tiene_rol("admin_rrhh"):
-        texto += "\n 2 : Gestionar departamentos"
-    if usuario.tiene_rol("admin_sistema"):
-        texto += "\n 3 : Gestionar roles"
+    if es_rrhh:
+        texto += "\n 2 : Gestionar departamentos\n 3 : Registrar empleado"
 
     opcion = str(input(texto + "\n 0 : Cerrar sesión\n\n Opción : "))
 
@@ -133,11 +119,43 @@ def menu_usuario(usuario):
         return None
     elif opcion == "1":
         usuario.cambiar_contrasena(getpass(" Nueva contraseña : "))
-    elif opcion == "2" and usuario.tiene_rol("admin_rrhh"):
+    elif opcion == "2" and es_rrhh:
         menu_departamentos(AdminRRHH(usuario))
-    elif opcion == "3" and usuario.tiene_rol("admin_sistema"):
-        menu_roles(AdministradorDeSistema(usuario))
+    elif opcion == "3" and es_rrhh:
+        menu_registrar_empleado(AdminRRHH(usuario))
     else:
         print(" Opción no válida, intente nuevamente.")
 
     return usuario
+    
+def pedir_gerente():
+    """Devuelve (id_gerente, valido). Vacío = departamento sin gerente."""
+    correo = input(" Correo del gerente (vacío = sin gerente) : ").strip()
+
+    if not correo:
+        return None, True
+
+    id_gerente = bd_buscar_id_usuario(correo)
+
+    if id_gerente is None:
+        print(" Usuario no encontrado.")
+        return None, False
+
+    return id_gerente, True
+
+def menu_registrar_empleado(admin: AdminRRHH):
+    nombre = input(" Nombre : ").strip()
+    correo = input(" Correo : ").strip()
+    clave = getpass(" Clave inicial : ")
+    direccion = input(" Dirección : ").strip()
+    telefono = input(" Teléfono : ").strip()
+    fecha = input(" Fecha inicio contrato (YYYY-MM-DD) : ").strip()
+    salario = pedir_entero(" Salario : ")
+    departamento = elegir_departamento(admin)
+
+    if not all([nombre, correo, clave, direccion, telefono, fecha]) or salario is None or departamento is None:
+        print(" Datos incompletos, no se registró el empleado.")
+        return
+
+    print(" " + admin.registrar_empleado(nombre, correo, clave, direccion, telefono, fecha,
+                                         salario, departamento.id_departamento))

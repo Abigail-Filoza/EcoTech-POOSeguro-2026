@@ -15,3 +15,5 @@ def conectar_db():
         return conexion
     except oracledb.Error as error:
         print(f"[ERROR] Conexión a Oracle FreeSQL | {error}")
+    
+NOMBRE_DEPTO_RRHH = "Recursos Humanos"

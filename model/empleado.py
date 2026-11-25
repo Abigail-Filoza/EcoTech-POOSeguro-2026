@@ -5,19 +5,21 @@ def validar_tabla_empleados():
     consulta_sql = """
         create table if not exists empleados (
             id NUMBER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) PRIMARY KEY,
-            id_usuario number unique,
+            id_usuario number not null unique,
+            id_departamento number,
             direccion varchar2(75) not null,
             telefono varchar2(25) not null,
             fecha_inicio_contrato date not null,
             salario number not null,
-            FOREIGN KEY(id_usuario) REFERENCES usuarios(id)
-        );
+            constraint fk_empleado_usuario foreign key (id_usuario) references usuarios(id),
+            constraint fk_empleado_departamento foreign key (id_departamento)
+                references departamentos(id_departamento)
+        )
     """
     conn = None
     cursor = None
 
     try:
-        print("Intentando validar tabla empleados...")
         conn = conectar_db()
 
         if conn:
@@ -29,25 +31,16 @@ def validar_tabla_empleados():
     finally:
         if cursor:
             cursor.close()
-            
+
         if conn:
             conn.close()
 
-def insertar_datos_empleado(empleado: "Empleado"):
-    consulta_select_usuario = """
-        select id from usuarios
-        where usuarios.correo = :1;
-    """
-
+def insertar_datos_empleado(empleado: "Empleado") -> bool:
+    consulta_select_usuario = "select id from usuarios where correo = :1"
     consulta_insert = """
-        insert into empleados (
-            id_usuario,
-            direccion,
-            telefono,
-            fecha_inicio_contrato,
-            salario
-        ) 
-        values (:1, :2, :3, :4, :5);
+        insert into empleados (id_usuario, id_departamento, direccion, telefono,
+                               fecha_inicio_contrato, salario)
+        values (:1, :2, :3, :4, to_date(:5, 'YYYY-MM-DD'), :6)
     """
     conn = None
     cursor = None
@@ -57,14 +50,20 @@ def insertar_datos_empleado(empleado: "Empleado"):
 
         if conn:
             cursor = conn.cursor()
-
             cursor.execute(consulta_select_usuario, (empleado.correo,))
-            id_usuario = str(cursor.fetchall()[0][0])
+            fila = cursor.fetchone()
 
-            cursor.execute(consulta_insert, (id_usuario, empleado.direccion, empleado.telefono, empleado.fecha_inicio_contrato, empleado.salario))
+            if fila is None:
+                print("[WARNING] Empleado no registrado | El usuario no existe")
+                return False
+
+            cursor.execute(consulta_insert, (fila[0], empleado.id_departamento, empleado.direccion,
+                                             str(empleado.telefono), empleado.fecha_inicio_contrato,
+                                             empleado.salario))
             conn.commit()
 
             print("[INFO] Empleado registrado correctamente")
+            return True
     except oracledb.IntegrityError as e:
         if conn:
             conn.rollback()
@@ -72,9 +71,9 @@ def insertar_datos_empleado(empleado: "Empleado"):
         error = e.args[0]
 
         if error.code == 1:
-            print("[WARNING] Este empleado ya fue registrado") # ORA-00001: prohibición de datos duplicados
-        elif error.code == 942:
-            print("[WARNING] Empleado no se logro registrar | Tabla usuarios no existe") # ORA-00942: intento de acceso a tabla inexistente
+            print("[WARNING] Este empleado ya fue registrado")        # ORA-00001
+        elif error.code == 2291:
+            print("[WARNING] El departamento indicado no existe")     # ORA-02291
         else:
             print(f"[ERROR] Error de integridad | {e}")
     except Exception as e:
@@ -89,29 +88,18 @@ def insertar_datos_empleado(empleado: "Empleado"):
         if conn:
             conn.close()
 
+    return False
+
 class Empleado(Usuario):
-    def __init__(self, nombre: str, correo: str, clave: str, direccion: str, telefono: int, fecha_inicio_contrato: str, salario: int):
-        super().__init__(nombre, correo, clave)
+    def __init__(self, nombre: str, correo: str, clave: str, direccion: str, telefono: int,
+                 fecha_inicio_contrato: str, salario: int, id_departamento: int = None):
+        super().__init__(nombre, correo, clave)  # crea el usuario (si el correo ya existe, solo avisa)
         self.direccion = direccion
         self.telefono = telefono
-        self.fecha_inicio_contrato = fecha_inicio_contrato
+        self.fecha_inicio_contrato = fecha_inicio_contrato  # formato YYYY-MM-DD
         self.salario = salario
+        self.id_departamento = id_departamento
 
-        validar_tabla_empleados()
-        insertar_datos_empleado(self)
+        self.registrado = insertar_datos_empleado(self)
 
-    def registrar_horas(self, p_fecha: str, p_horas_trabajadas: float, p_desc_tareas: str, proyecto):
-        from .registrohorario import RegistroHorario
-        from .proyecto import Proyecto
-
-        if isinstance(proyecto, Proyecto):
-            nuevo_registro = RegistroHorario(self,
-                                            p_fecha,
-                                            p_horas_trabajadas,
-                                            p_desc_tareas,
-                                            proyecto)
-        else:
-            print("[ERROR] No es posible registrar trabajo en proyecto inexistente")
-
-        #return tambien sujeto a cambio (placeholder)
-        return f"{p_horas_trabajadas}hrs registradas en el proyecto <<{proyecto}>> a nombre de {self.nombre}"
+    # registrar_horas queda exactamente como lo tienes
